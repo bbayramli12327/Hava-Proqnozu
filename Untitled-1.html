@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hava Proqnozu</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #4facfe, #00c6ff);
+            color: white;
+            padding: 30px 15px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 38px;
+        }
+
+        .search {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .search input {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 17px;
+            outline: none;
+        }
+
+        .search button {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 12px;
+            background: #222;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .search button:hover {
+            background: #444;
+            transform: scale(1.03);
+        }
+
+        .loading {
+            text-align: center;
+            font-size: 20px;
+            margin: 20px;
+            display: none;
+        }
+
+        .error {
+            background: rgba(255, 0, 0, 0.25);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        .current-weather {
+            background: rgba(255,255,255,0.18);
+            backdrop-filter: blur(12px);
+            border-radius: 25px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .city {
+            font-size: 30px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .date {
+            opacity: 0.85;
+            margin-bottom: 15px;
+        }
+
+        .weather-icon {
+            font-size: 80px;
+            margin: 10px;
+        }
+
+        .temperature {
+            font-size: 65px;
+            font-weight: bold;
+        }
+
+        .description {
+            font-size: 22px;
+            margin: 10px 0 25px;
+        }
+
+        .details {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .detail {
+            background: rgba(255,255,255,0.15);
+            padding: 18px;
+            border-radius: 15px;
+        }
+
+        .detail span {
+            display: block;
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+
+        .detail strong {
+            font-size: 20px;
+        }
+
+        .forecast-title {
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+
+        .forecast {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+        }
+
+        .day {
+            background: rgba(255,255,255,0.18);
+            backdrop-filter: blur(10px);
+            border-radius: 18px;
+            padding: 20px 10px;
+            text-align: center;
+            transition: 0.3s;
+        }
+
+        .day:hover {
+            transform: translateY(-7px);
+            background: rgba(255,255,255,0.28);
+        }
+
+        .day-name {
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .day-icon {
+            font-size: 45px;
+            margin-bottom: 10px;
+        }
+
+        .day-temp {
+            font-size: 19px;
+            font-weight: bold;
+        }
+
+        .rain {
+            margin-top: 8px;
+            font-size: 14px;
+            opacity: 0.85;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            opacity: 0.7;
+            font-size: 14px;
+        }
+
+        @media (max-width: 700px) {
+            h1 {
+                font-size: 30px;
+            }
+
+            .search {
+                flex-direction: column;
+            }
+
+            .details {
+                grid-template-columns: 1fr;
+            }
+
+            .forecast {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .temperature {
+                font-size: 52px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .forecast {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🌤️ Hava Proqnozu</h1>
+
+    <div class="search">
+        <input
+            type="text"
+            id="cityInput"
+            placeholder="Şəhər adı daxil et... (məs: Bakı)"
+            value="Bakı"
+        >
+        <button onclick="getWeather()">Axtar 🔍</button>
+    </div>
+
+    <div class="loading" id="loading">
+        ⏳ Hava məlumatları yüklənir...
+    </div>
+
+    <div class="error" id="error"></div>
+
+    <div id="weatherContent">
+
+        <div class="current-weather">
+
+            <div class="city" id="cityName">Bakı</div>
+
+            <div class="date" id="currentDate"></div>
+
+            <div class="weather-icon" id="weatherIcon">☀️</div>
+
+            <div class="temperature" id="temperature">
+                --°C
+            </div>
+
+            <div class="description" id="description">
+                Yüklənir...
+            </div>
+
+            <div class="details">
+
+                <div class="detail">
+                    <span>💧 Rütubət</span>
+                    <strong id="humidity">--%</strong>
+                </div>
+
+                <div class="detail">
+                    <span>💨 Külək</span>
+                    <strong id="wind">-- km/s</strong>
+                </div>
+
+                <div class="detail">
+                    <span>🌧️ Yağıntı</span>
+                    <strong id="rain">-- mm</strong>
+                </div>
+
+            </div>
+        </div>
+
+        <h2 class="forecast-title">📅 5 günlük proqnoz</h2>
+
+        <div class="forecast" id="forecast"></div>
+
+    </div>
+
+    <footer>
+        Hava məlumatları Open-Meteo API vasitəsilə alınır.
+    </footer>
+
+</div>
+
+
+<script>
+
+    // Hava vəziyyətini emoji və Azərbaycan dilində göstəririk
+    function getWeatherInfo(code) {
+
+        const weather = {
+            0:  ["☀️", "Açıq hava"],
+            1:  ["🌤️", "Əsasən açıq"],
+            2:  ["⛅", "Qismən buludlu"],
+            3:  ["☁️", "Buludlu"],
+            45: ["🌫️", "Dumanlı"],
+            48: ["🌫️", "Dumanlı"],
+            51: ["🌦️", "Zəif çiskin"],
+            53: ["🌦️", "Çiskin"],
+            55: ["🌧️", "Güclü çiskin"],
+            61: ["🌧️", "Zəif yağış"],
+            63: ["🌧️", "Yağış"],
+            65: ["🌧️", "Güclü yağış"],
+            71: ["🌨️", "Zəif qar"],
+            73: ["🌨️", "Qar"],
+            75: ["❄️", "Güclü qar"],
+            80: ["🌦️", "Yağış yağacaq"],
+            81: ["🌦️", "Güclü yağış"],
+            82: ["⛈️", "Çox güclü yağış"],
+            95: ["⛈️", "Tufan"],
+            96: ["⛈️", "Dolu ilə tufan"],
+            99: ["⛈️", "Güclü dolu və tufan"]
+        };
+
+        return weather[code] || ["🌡️", "Naməlum hava"];
+    }
+
+
+    // Tarixi Azərbaycan formatında göstəririk
+    function formatDate(dateString) {
+
+        const date = new Date(dateString);
+
+        return date.toLocaleDateString("az-AZ", {
+            weekday: "long",
+            day: "numeric",
+            month: "long"
+        });
+    }
+
+
+    // Günün adını qısa göstəririk
+    function getDayName(dateString) {
+
+        const date = new Date(dateString);
+
+        return date.toLocaleDateString("az-AZ", {
+            weekday: "short"
+        });
+    }
+
+
+    // Şəhərin koordinatlarını tapırıq
+    async function getCityCoordinates(city) {
+
+        const url =
+            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=az&format=json`;
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error("Şəhər məlumatı alınmadı.");
+        }
+
+        const data = await response.json();
+
+        if (!data.results || data.results.length === 0) {
+            throw new Error("Bu adda şəhər tapılmadı.");
+        }
+
+        return data.results[0];
+    }
+
+
+    // Əsas hava məlumatlarını alırıq
+    async function getWeather() {
+
+        const cityInput =
+            document.getElementById("cityInput").value.trim();
+
+        const loading =
+            document.getElementById("loading");
+
+        const error =
+            document.getElementById("error");
+
+        if (!cityInput) {
+            showError("Zəhmət olmasa şəhər adı daxil et.");
+            return;
+        }
+
+        loading.style.display = "block";
+        error.style.display = "none";
+
+        try {
+
+            // Şəhəri tap
+            const location =
+                await getCityCoordinates(cityInput);
+
+            const latitude = location.latitude;
+            const longitude = location.longitude;
+
+            // Hava API-si
+            const weatherURL =
+                `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}` +
+                `&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,rain` +
+                `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,rain_sum` +
+                `&timezone=auto&forecast_days=5`;
+
+            const response = await fetch(weatherURL);
+
+            if (!response.ok) {
+                throw new Error("Hava məlumatları alınmadı.");
+            }
+
+            const data = await response.json();
+
+            // Şəhər adı
+            document.getElementById("cityName").textContent =
+                `${location.name}, ${location.country || ""}`;
+
+            // Tarix
+            document.getElementById("currentDate").textContent =
+                formatDate(data.current.time);
+
+            // Cari hava
+            const currentInfo =
+                getWeatherInfo(data.current.weather_code);
+
+            document.getElementById("weatherIcon").textContent =
+                currentInfo[0];
+
+            document.getElementById("description").textContent =
+                currentInfo[1];
+
+            document.getElementById("temperature").textContent =
+                Math.round(data.current.temperature_2m) + "°C";
+
+            document.getElementById("humidity").textContent =
+                data.current.relative_humidity_2m + "%";
+
+            document.getElementById("wind").textContent =
+                Math.round(data.current.wind_speed_10m) + " km/s";
+
+            document.getElementById("rain").textContent =
+                data.current.rain + " mm";
+
+
+            // 5 günlük proqnoz
+            const forecast =
+                document.getElementById("forecast");
+
+            forecast.innerHTML = "";
+
+
+            for (let i = 0; i < data.daily.time.length; i++) {
+
+                const info =
+                    getWeatherInfo(data.daily.weather_code[i]);
+
+                const day = document.createElement("div");
+
+                day.className = "day";
+
+                day.innerHTML = `
+
+                    <div class="day-name">
+                        ${getDayName(data.daily.time[i])}
+                    </div>
+
+                    <div class="day-icon">
+                        ${info[0]}
+                    </div>
+
+                    <div>
+                        ${info[1]}
+                    </div>
+
+                    <div class="day-temp">
+                        ${Math.round(data.daily.temperature_2m_max[i])}° /
+                        ${Math.round(data.daily.temperature_2m_min[i])}°
+                    </div>
+
+                    <div class="rain">
+                        💧 ${data.daily.precipitation_probability_max[i] ?? 0}%
+                    </div>
+
+                `;
+
+                forecast.appendChild(day);
+            }
+
+        } catch (err) {
+
+            showError(err.message);
+
+        } finally {
+
+            loading.style.display = "none";
+
+        }
+    }
+
+
+    // Xəta mesajı
+    function showError(message) {
+
+        const error =
+            document.getElementById("error");
+
+        error.textContent = "❌ " + message;
+
+        error.style.display = "block";
+    }
+
+
+    // Enter düyməsi ilə axtarış
+    document
+        .getElementById("cityInput")
+        .addEventListener("keydown", function(event) {
+
+            if (event.key === "Enter") {
+                getWeather();
+            }
+
+        });
+
+
+    // Sayt açılan kimi Bakı havasını göstər
+    getWeather();
+
+</script>
+
+</body>
+</html>
